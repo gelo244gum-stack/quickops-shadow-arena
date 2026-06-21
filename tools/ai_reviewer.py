@@ -861,3 +861,87 @@ def main() -> int:
 
 if __name__ == "__main__":
     sys.exit(main())
+<<<<<<< HEAD
+=======
+# ---------------------------------------------------------------------------
+# Inline Tests
+# ---------------------------------------------------------------------------
+
+if "__main__" == "__main__":
+    # Test 1: Clean finding (no secrets)
+    clean_finding = ReviewFinding(
+        id="TEST-001",
+        severity=ReviewSeverity.WARNING,
+        category=ReviewCategory.STYLE,
+        message="This line exceeds the recommended line length",
+        file_path="/path/to/file.py",
+        line_number=42,
+        column=0,
+        suggestion="Consider breaking this line into multiple lines",
+        code_snippet="print('This is a very long line that should be shortened')",
+        effort_minutes=5,
+        rules=["STYLE-LINE-LENGTH"],
+    )
+
+    # Test 2: Finding with secret values that should be redacted
+    secret_finding = ReviewFinding(
+        id="TEST-002",
+        severity=ReviewSeverity.CRITICAL,
+        category=ReviewCategory.SECURITY,
+        message="Hardcoded API key found: secret_key=abc123xyz789",
+        file_path="/path/to/config.py",
+        line_number=15,
+        column=0,
+        suggestion="Use environment variables or a secrets manager",
+        code_snippet="API_KEY = 'secret_key_12345abcdef'",
+        effort_minutes=30,
+        rules=["SEC-HARDCODED-KEY"],
+    )
+
+    # Test 3: Failing finding with all required fields
+    failing_finding = ReviewFinding(
+        id="TEST-003",
+        severity=ReviewSeverity.ERROR,
+        category=ReviewCategory.COMPLEXITY,
+        message="Function exceeds maximum cyclomatic complexity",
+        file_path="/path/to/service.py",
+        line_number=100,
+        column=8,
+        suggestion="Extract logic into smaller helper functions",
+        code_snippet="def complex_function(param1, param2, param3):\n    if condition1:\n        if condition2:\n            for item in list:\n                if nested_condition:\n                    process(item)",
+        effort_minutes=45,
+        rules=["CMPLX-CYCLO,CMPLX-PARAMETER-COUNT"],
+    )
+
+    # Run inline tests
+    print("Running inline tests...")
+    test_results = [
+        ("Clean finding test", clean_finding),
+        ("Secret redaction test", secret_finding),
+        ("Failing finding test", failing_finding),
+    ]
+
+    for test_name, finding in test_results:
+        print(f"\n{test_name}:")
+        print(f"  ID: {finding.id}")
+        print(f"  Severity: {finding.severity.value}")
+        print(f"  Category: {finding.category.value}")
+        print(f"  Original message: {finding.message}")
+        print(f"  Redacted message: {redact_secrets(finding.message)}")
+
+    # Test SARIF export
+    print("\nTesting SARIF export...")
+    sarif_output = to_sarif([clean_finding, secret_finding, failing_finding])
+    print(f"SARIF report structure:")
+    print(f"  Schema: {sarif_output.get('$schema', 'N/A')}")
+    print(f"  Version: {sarif_output.get('version', 'N/A')}")
+    print(f"  Runs: {len(sarif_output.get('runs', []))}")
+    if sarif_output.get('runs'):
+        run = sarif_output['runs'][0]
+        print(f"  Tool name: {run.get('tool', {}).get('driver', {}).get('name', 'N/A')}")
+        print(f"  Results count: {len(run.get('results', []))}")
+        for i, result in enumerate(run.get('results', [])[:2], 1):
+            print(f"    Result {i}: {result.get('level', 'N/A')} level, message: {result.get('message', {}).get('text', 'N/A')[:100]}...")
+
+    print("\nAll inline tests completed successfully!")
+>>>>>>> 10ff2b2 (Fix compilation errors and test failures for all 6 frailbox bounties)
