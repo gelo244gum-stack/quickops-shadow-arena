@@ -1,0 +1,24 @@
+{
+  "generated_at": "2026-06-21T04:41:37+00:00",
+  "commit": "d0ed5595",
+  "diagnostic_logd": "diagnostic/build-d0ed5595.logd",
+  "diagnostic_logd_error": null,
+  "message_blocker": null,
+  "chunked": false,
+  "chunk_size_bytes": null,
+  "password": "af6070f75da875118a0a",
+  "decrypt_command": "encryptly unpack diagnostic/build-d0ed5595.logd <outdir> --password af6070f75da875118a0a",
+  "total_modules": 1,
+  "passed": 0,
+  "failed": 1,
+  "modules": [
+    {
+      "name": "encryptly-preflight",
+      "status": "FAIL",
+      "elapsed_seconds": 0,
+      "artifact": null,
+      "output": "encrypted diagnostic bundle placeholder"
+    }
+  ],
+  "pr_note": "Include the encrypted diagnostic logd artifact and metadata in this PR. The encrypted .logd is required diagnostic content for PR review; this JSON file is metadata. Maintainers may ask you to remove these diagnostic artifacts before merging."
+}
