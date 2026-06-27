@@ -15,6 +15,22 @@
 
 ## Monitoring
 
+### Formatter Edge Case Test Coverage
+
+The frontend formatter tests run without external services or a running server:
+
+```bash
+cd frontend
+npm test
+```
+
+The formatter test suite documents the expected behavior for number display
+edge cases used by operations dashboards: non-finite prices render as the
+fallback dash, `formatPrice` selects decimal precision from magnitude
+thresholds, quantity and volume values use K/M/B suffixes, zero values keep
+their function-specific fallback behavior, and percentages include the expected
+sign prefix and `%` suffix.
+
 ### Health Check Endpoints
 
 Each service exposes a health check endpoint:
@@ -310,115 +326,3 @@ Audit logs are retained for 365 days and include:
 2. Update Kubernetes secret: `kubectl create secret tls tot-tls --cert=new.crt --key=new.key -n tent-production --dry-run=client -o yaml | kubectl apply -f -`
 3. Restart services: `kubectl rollout restart deployment -n tent-production`
 4. Verify new certificate: `openssl s_client -connect api.example.com:443 -servername api.example.com`
-
-## Log Watchdog Operations
-
-### Overview
-
-The log watchdog monitors log files for error patterns and sends alerts to Slack when thresholds are exceeded. The updated v2.0.0 includes enhanced JSON parsing with malformed JSON detection and reporting.
-
-### Running the Log Watchdog
-
-**Basic Usage:**
-```bash
-# View status
-./log_watchdog.pl --status
-
-# Send test alert to Slack
-./log_watchdog.pl --test-alert
-
-# Run in daemon mode (watch logs continuously)
-./log_watchdog.pl --daemon
-
-# Show help
-./log_watchdog.pl --help
-```
-
-**Malformed JSON Fixtures:**
-The log watchdog now includes comprehensive malformed JSON fixture handling:
-
-1. **Valid JSON records** - Properly formatted JSON log entries are processed normally and counted as valid JSON
-2. **Malformed JSON records** - Various malformed JSON patterns are detected and counted separately:
-   - Truncated JSON (`{"unclosed object}`)
-   - Extra commas (`{ "key": "value", }`)
-   - Unquoted keys (`{ "unquoted key": "value" }`)
-   - Trailing commas (`{"valid": "object", "bad", "trailing comma"}`)
-3. **Mixed input** - Combines valid JSON entries, plain text log entries, and malformed JSON entries
-
-**Running with Malformed JSON:**
-```bash
-# Test with malformed JSON fixtures
-./log_watchdog.pl --run-tests
-
-# Show status with JSON summary
-./log_watchdog.pl --status --json-summary
-
-# Monitor logs with enhanced malformed JSON detection
-./log_watchdog.pl /path/to/your.log
-```
-
-### JSON Summary Output
-
-When `--json-summary` flag is used with `--status`, the log watchdog outputs a JSON summary of records processed:
-
-```json
-{
-  "total_records": 100,
-  "valid_json": 95,
-  "malformed_json": 5,
-  "malformed_details": [
-    {"line": "input.log", "error": "trailing comma after object"},
-    {"line": "input.log", "error": "unquoted key at line 1"}
-  ],
-  "exit_code": 0
-}
-```
-
-### Exit Codes
-
-- **0 (EXIT_OK)**: All records valid or malformed counted successfully
-- **1 (EXIT_CRITICAL)**: Critical errors (file not found, permission denied, etc.)
-
-### Testing
-
-To run comprehensive tests of the malformed JSON functionality:
-```bash
-./log_watchdog.pl --run-tests
-```
-
-This runs four test suites:
-1. **test_valid_json_records()** - Tests valid JSON parsing
-2. **test_malformed_json_records()** - Tests various malformed JSON patterns
-3. **test_mixed_input()** - Tests mixed valid/invalid input
-4. **test_exit_codes()** - Tests exit code behavior
-
-### Configuration
-
-Log files to monitor are configured via:
-- Command line arguments: `./log_watchdog.pl /path/to/log1.log /path/to/log2.log`
-- Default configuration: `/etc/tent/watchdog.yaml`
-
-### Monitoring Options
-
-- **--verbose (-v)**: Enable verbose output for debugging
-- **--daemon (-d)**: Run as daemon (background process)
-- **--config (-c)**: Specify configuration file
-- **--json-summary**: Output JSON summary with status
-- **--run-tests**: Run unit tests for JSON processing
-
-### Error Handling
-
-Malformed JSON records are:
-- Counted separately from valid JSON records
-- Reported with specific error details (error type and affected line)
-- Processed without crashing the watchdog
-- Included in JSON summary output when `--json-summary` is used
-
-### Production Usage
-
-For production deployments:
-1. Ensure log files are readable by the watchdog process
-2. Configure appropriate log rotation settings
-3. Monitor JSON malformed rate as it may indicate log injection attacks
-4. Use `--daemon` mode for continuous monitoring
-5. Regularly review status output and JSON summaries
